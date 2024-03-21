@@ -40,11 +40,25 @@
         }
     </style>
     <script type="module">
-        import { initializeFirebaseAndGetToken } from './firebaseAuth.js';
-        // selectCampaign function
+        import { initFirebaseAndAuthUser } from './firebaseAuth.js';
+        import { sendMessage } from './serverComms.js';
+        
         window.backToCampaigns = function() {
             window.location.href = "/index.html";
         }
+
+        window.buyCredits = function() {
+            window.location.href = "/buy_credits.html";
+        }
+
+        window.logout = function() {
+            firebase.auth().signOut().then(function() {
+                window.location.href = "/login.html";
+            }).catch(function(error) {
+                console.log(error);
+            });
+        }
+
         function deleteAccount() {
             // ask confirmation first with alert
             if (!confirm("Are you sure you want to delete your account and all data related to it?")) {
@@ -61,25 +75,20 @@
 
             });
         }
-        window.logout = function() {
-            firebase.auth().signOut().then(function() {
-                window.location.href = "/login.html";
-            }).catch(function(error) {
-                console.log(error);
-            });
-        }
-        document.addEventListener('DOMContentLoaded', async function() {
-            const { idToken, email } = await initializeFirebaseAndGetToken();
-            
-            firebase.auth().onAuthStateChanged(function(user) {
-                if (user) {
-                    // User is signed in, display user's email
-                    document.getElementById('userEmail').textContent = 'Email: ' + user.email;
-                } else {
-                    // No user is signed in, redirect to login or hide email
-                }
-            });
 
+        document.addEventListener('DOMContentLoaded', async function() {
+            const { idToken, email } = await initFirebaseAndAuthUser();
+            document.getElementById('userEmail').textContent = 'Email: ' + email;
+            const {credits, acc_type } = await sendMessage('fetch_profile/', {'user_token': idToken});
+            console.log('fetch_profile/ response', {credits, acc_type });
+            document.getElementById('userCredits').textContent = 'Credits: ' + credits;
+            document.getElementById('userVipStatus').textContent = 'Account Status: ' + acc_type;
+            if (acc_type === 'VIP') {
+                document.getElementById('userVipDescription').textContent = '+500 per day up to 1000 max';
+            } 
+            else {
+                document.getElementById('userVipDescription').textContent = '+100 per day up to 1000 max';
+            }
         });
     </script>
 </head>
@@ -94,10 +103,12 @@
     <h3>Your Account</h3>
     <div class="panel">
         <p id="userEmail">Email: </p> 
-        <p>Credits: 10000</p> 
-        <p style="font-size: 12px">+1000 per day up to 10000 max</p>
+        <p id="userCredits">Credits: </p> 
+        <p id="userVipStatus">Account Status: </p> 
+        <p id="userVipDescription" style="font-size: 12px">+   per day up to 1000 max</p>
         <br>
         <button onclick="backToCampaigns()">Back To Campaigns</button>
+        <button disabled>Buy Credits</button>
         <button onclick="logout()">Logout</button>
         <!-- <button onclick="deleteAccount()" style="background-color:indianred;">Delete Account</button> -->
     </div>

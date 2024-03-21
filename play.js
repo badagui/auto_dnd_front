@@ -1,60 +1,82 @@
 import { sendMessage } from './serverComms.js';
-import { initializeFirebaseAndGetToken } from './firebaseAuth.js';
+import { initFirebaseAndAuthUser } from './firebaseAuth.js';
 
 let campaignId = null;
 window.onload = init;
-
+let campaign_intro_img_url = null;
 
 async function init() {
+    toggleInputs(false);
     const urlParams = new URLSearchParams(window.location.search);
     campaignId = urlParams.get('campaignId');
     
     const response = await sendMessage('load_campaign/', { 
-        'user_token': await initializeFirebaseAndGetToken(), 
+        'user_token': (await initFirebaseAndAuthUser()).idToken, 
         'campaign_id': campaignId 
     });
-    console.log('load_campaign response', response);
     processResponse(response);
-}
-
-function processResponse(response) {
-    console.log('processResponse:', response)
-    setNewNotes("charSheetText", formatCharSheet(response.char_sheet));
-    setNewNotes("campaignNotesText", formatCampaignNotes(response.campaign_notes));
-    setNewMessages("chatLog", response.messages);
-    // tool used mode
-    if (response.messages.length > 0 && response.messages[response.messages.length - 1].role === 'tool'){
-        let messageInput = document.getElementById("messageInput");
-        let sendButton = document.querySelector("button");
-        toggleInputs(true, "Continue...")
-        messageInput.value = ' ';
-        messageInput.disabled = true;
-        messageInput.style.backgroundColor = "lightgray";
-    } else {
-        toggleInputs(true, "Send");
-    }
 }
 
 window.sendButton = async function() {
     // get message and add to chat log
     let message = document.getElementById("messageInput").value;
-    if (message == '') { return; }
-    if (message != ' ') { 
+    // ignore empty
+    if (message == '') { 
+        return; 
+    } 
+    // if not a tick message, add to chat log
+    if (message != ' ') {
         let chatLogNewMsg = document.createElement("pre");
         chatLogNewMsg.textContent = `User: ${message}`;
         document.getElementById("chatLog").appendChild(chatLogNewMsg);
-        document.getElementById("messageInput").value = '';
-        // scroll to bottom
         document.getElementById("chatLog").scrollTop = chatLog.scrollHeight;
     }
+    // clear input
+    document.getElementById("messageInput").value = '';
+    toggleInputs(false);
     // send message
     const response = await sendMessage(
-        'process_input/', {'user_token': await initializeFirebaseAndGetToken(), 
+        'process_input/', {'user_token': (await initFirebaseAndAuthUser()).idToken, 
         'campaign_id': campaignId, 
         'content': message
     });
-    console.log('process_input response', response);
+    // console.log('process_input response', response);
     processResponse(response);
+}
+
+function processResponse(response) {
+    console.log('response:', response)
+    
+    setNewNotes("charSheetText", formatCharSheet(response.char_sheet));
+    setNewNotes("campaignNotesText", formatCampaignNotes(response.campaign_notes));
+    const campaign_intro_img_base64 = response.campaign_intro_img_b64;
+    if (campaign_intro_img_base64) {
+        console.log('campaign_intro_img_base64 RECEIVED AND BEING SET') // TEST
+        campaign_intro_img_url = `data:image/png;base64,${campaign_intro_img_base64}`;
+    }
+    setNewMessages("chatLog", response.messages);
+    setNewCredits(response.credits);
+
+    // not user turn mode
+    if (!response.is_user_turn){
+        // enable button but disable input
+        toggleInputs(true, "Continue...") 
+        let messageInput = document.getElementById("messageInput");
+        messageInput.value = ' ';
+        messageInput.disabled = true;
+        messageInput.style.backgroundColor = "lightgray";
+        // auto followup
+        sendButton();
+    } else if (response.messages.length == 1) {
+        // first msg
+        toggleInputs(true, "Let's Begin!")
+        messageInput.value = "Let's begin!";
+        messageInput.disabled = true;
+        messageInput.style.backgroundColor = "lightgray";
+    }   else {
+        toggleInputs(true, "Send");
+    }
+
 }
 
 function formatCharSheet(charSheet) {
@@ -117,9 +139,25 @@ function setNewMessages(chatLogId, messages) {
         }
         // add message
         chatLog.appendChild(chatLogNewMsg);
-        // scroll to bottom
+        
+        // // scroll to bottom
         // chatLog.scrollTop = chatLog.scrollHeight;
+        
+        // on 8th message add the campaign intro img url
+        if (i == 8) {
+            console.log('I NEED THE IMAGE NOWW', campaign_intro_img_url) // TEST
+            let img = document.createElement("img");
+            img.src = campaign_intro_img_url;
+            img.style.width = '100%';
+            chatLog.appendChild(img);
+        
+        }
     }
+}
+
+function setNewCredits(credits) {
+    let creditsBox = document.getElementById("creditsText");
+    creditsBox.innerHTML = `Credits: ${credits}`;
 }
 
 function toggleInputs(enable, send_button_text="Send") {

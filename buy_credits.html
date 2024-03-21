@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auto D&D Buy Credits</title>
+    <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.13.0/firebase-auth-compat.js"></script>
+    <script type="module" src="firebaseAuth.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="topbar.css">
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .panel {
+            border: 2px solid #000;
+            padding: 10px;
+            margin: 10px;
+            width: 400px;
+        }
+        button {
+            width: 100%;
+            margin-bottom: 10px;
+            line-height: 20px;
+            padding: 0 10px;
+            margin: 10px 0;
+            height: 40px;
+            font-size: 16px;
+        }
+        @media screen and (max-width: 768px) {
+            body {
+                font-size: 20px;
+            }
+            .panel {
+                width: auto;
+            }
+        }
+    </style>
+    <script type="module">
+        window.backToProfile = function() {
+            window.location.href = "/profile.html";
+        }
+    </script>
+</head>
+<body>
+    <div class="topBar">
+        <div></div>
+        <h1>Auto D&D</h1>
+        <div class="topBarLinks">
+            <a href="#"><i class="fa fa-user-circle" aria-hidden="true" title="Account" style="margin-right: 15px"></i></a>
+        </div>
+    </div>
+    <h3>Buy Credits</h3>
+    <div class="panel">
+        <p>Soon</p> 
+        <br>
+        <button onclick="backToProfile()">Back to Profile</button>
+    </div>
+    <p style="font-size: 12px">got feedback? jonasmirovski@gmail.com</p> 
+</body>
+</html>

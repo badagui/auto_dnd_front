@@ -87,28 +87,51 @@
     
     <script type="module">
         import { sendMessage } from './serverComms.js';
-        import { initializeFirebaseAndGetToken } from './firebaseAuth.js';
+        import { initFirebaseAndAuthUser } from './firebaseAuth.js';
 
         window.onload = async () => {
-            const { idToken, email } = await initializeFirebaseAndGetToken();
+            const { idToken, email } = await initFirebaseAndAuthUser();
             // console.log('idToken', idToken, 'email', email);
-            // const payload = {'user_token': idToken};
-            // const response = await sendMessage('fetch_campaigns/', payload);
-            // console.log('fetch_campaigns/ response', response);
-            // if (response) {
-            //     const campaignOptions = document.querySelector('.campaignOptions');
-            //     for (const campaign of response.user_campaigns) {
-            //         const campaignOption = document.createElement('div');
-            //         campaignOption.className = 'campaignOption';
-            //         campaignOption.innerHTML = `
-            //             <label>
-            //                 <input type="radio" name="campaign" value="${campaign.campaign_id}"> ${campaign.campaign_name}
-            //             </label>
-            //             <i class="fas fa-trash-alt" onclick="confirmDelete('${campaign.campaign_id}')"></i>
-            //         `;
-            //         campaignOptions.appendChild(campaignOption);
-            //     }
-            // }
+            const payload = {'user_token': idToken};
+            const response = await sendMessage('fetch_campaigns/', payload);
+            console.log('fetch_campaigns/ response', response);
+            
+            if (!response) {
+                return;
+            }
+            
+            if (response.maintenance_mode) {
+                document.getElementById('mainTitle').innerHTML = '<h3>Maintenance Mode</h3>';
+                return;
+            } else {
+                document.getElementById('mainTitle').innerHTML = '<h3>Select Your Campaign</h3>';
+                document.getElementById('mainBody').innerHTML = `
+                    <div class="panel">
+                        <p>Loads an existing campaign, or creates a new one.</p> 
+                        <div class="campaignOptions">
+                            <div class="campaignOption">
+                                <label>
+                                    <input type="radio" id="campaignOption1" name="campaign" value="new" checked> <b>Start New Campaign</b>
+                                </label>
+                            </div>
+                        </div>
+                        <button onclick="redirectToSelectedCampaign()">Let's go</button>
+                    </div>
+                `;
+            }
+            
+            const campaignOptions = document.querySelector('.campaignOptions');
+            for (const campaign of response.user_campaigns) {
+                const campaignOption = document.createElement('div');
+                campaignOption.className = 'campaignOption';
+                campaignOption.innerHTML = `
+                    <label>
+                        <input type="radio" name="campaign" value="${campaign.campaign_id}"> ${campaign.campaign_name}
+                    </label>
+                    <i class="fas fa-trash-alt" onclick="confirmDelete('${campaign.campaign_id}')"></i>
+                `;
+                campaignOptions.appendChild(campaignOption);
+            }
         }
 
         window.redirectToSelectedCampaign = async function() {
@@ -127,6 +150,12 @@
                 window.location.href = `play.html?campaignId=${encodeURIComponent(campaign_id)}`;
             }
         }
+
+        window.confirmDelete = function(campaignName) {
+            if (confirm("Are you sure you want to delete this campaign?")) {
+                console.log("Request sent to delete " + campaignName);
+            }
+        }
     </script>
 </head>
 <body>
@@ -137,47 +166,7 @@
             <a href="/profile.html"><i class="fa fa-user-circle" aria-hidden="true" title="Account" style="margin-right: 15px"></i></a>
         </div>
     </div>
-    <!-- <h3>Select Your Campaign</h3> -->
-    <h3>Maintenance Mode</h3>
-    <script>
-        // <div class="panel">
-        //     <p>Loads an existing campaign, or creates a new one.</p> 
-        //     <!-- Radio buttons for campaign options -->
-        //     <div class="campaignOptions">
-                
-        //         <div class="campaignOption">
-        //             <label>
-        //                 <input type="radio" id="campaignOption1" name="campaign" value="new" checked> <b>Start New Campaign</b>
-        //             </label>
-        //         </div>
-
-        //         <!-- 
-        //         <div class="campaignOption">
-        //             <label>
-        //                 <input type="radio" id="campaignOption2" name="campaign" value="123"> Tales of Ice and Fire
-        //             </label>
-        //             <i class="fas fa-trash-alt" onclick="confirmDelete(document.getElementById('campaignOption2').value)"></i>
-        //         </div>
-
-        //         <div class="campaignOption">
-        //             <label>
-        //                 <input type="radio" id="campaignOption3" name="campaign" value="456"> Lands of Blood and Honor
-        //             </label>
-        //             <i class="fas fa-trash-alt" onclick="confirmDelete(document.getElementById('campaignOption3').value)"></i>
-        //         </div> 
-        //         -->
-
-        //     </div>
-        //     <button onclick="redirectToSelectedCampaign()">Let's go</button>
-        // </div>
-    </script>
-
-    <script>
-        function confirmDelete(campaignName) {
-            if (confirm("Are you sure you want to delete this campaign?")) {
-                console.log("Request sent to delete " + campaignName);
-            }
-        }
-    </script>
+    <div id="mainTitle"></div>
+    <div id="mainBody"></div>
 </body>
 </html>

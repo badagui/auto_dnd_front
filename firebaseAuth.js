@@ -1,7 +1,7 @@
 // If user is not authenticated, redirect to login page
 // If user is authenticated, retrieve and return the ID token
 
-export function initializeFirebaseAndGetToken() {
+export function initFirebaseAndAuthUser() {
     const firebaseConfig = {
         apiKey: "AIzaSyANm47YWgqEwHI43Ho-P6PRzLd0SRaPQdY",
         authDomain: "auto-dnd-2ebcb.firebaseapp.com",

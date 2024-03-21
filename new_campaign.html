@@ -60,13 +60,10 @@
     </style>
     <script type="module">
         import { sendMessage } from './serverComms.js';
-        import { initializeFirebaseAndGetToken } from './firebaseAuth.js';
+        import { initFirebaseAndAuthUser } from './firebaseAuth.js';
 
         window.onload = async () => {
-            const user_token = await initializeFirebaseAndGetToken();
-            // const payload = {'user_token': user_token};
-            // const response = await sendMessage('create_campaign/', payload);
-            // console.log('fetch_campaigns/ response', response);
+            // const { idToken, email } = await initFirebaseAndAuthUser();
         }
 
         window.rollAttributes = function() {
@@ -90,8 +87,8 @@
                 wisdom: document.getElementById('wisdom').value,
                 charisma: document.getElementById('charisma').value
             };
-            const user_token = await initializeFirebaseAndGetToken();
-            const payload = {'user_token': user_token, 'character_data': characterData};
+            const { idToken, email } = await initFirebaseAndAuthUser();
+            const payload = {'user_token': idToken, 'character_data': characterData};
             const response = await sendMessage('create_campaign/', payload);
             console.log('create_campaign/ response', response);
             if (response && response.campaign_id) {
@@ -100,7 +97,6 @@
             } else {
                 console.error('Error creating campaign');
             }
-            
         }
     </script>
 </head>
